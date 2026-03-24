@@ -29,21 +29,17 @@ Claude Code
 ```bash
 git clone https://github.com/nantestudio/nst-mcp.git
 cd nst-mcp
-npm install
-npm run build
+bun install
 ```
 
 ### Add to Claude Code
 
 ```bash
-# From local build
-claude mcp add nst-mcp -- node /path/to/nst-mcp/dist/index.js
-
-# Development (no build step needed)
-claude mcp add nst-mcp -- npx tsx /path/to/nst-mcp/src/index.ts
+# Runs TypeScript directly — no build step needed
+claude mcp add nst-mcp -- bun /path/to/nst-mcp/src/index.ts
 ```
 
-## Tools (62)
+## Tools (65)
 
 | Domain | Tools | Type | Description |
 |--------|-------|------|-------------|
@@ -56,7 +52,7 @@ claude mcp add nst-mcp -- npx tsx /path/to/nst-mcp/src/index.ts
 | **Play Store** | 4 | shell-out | Release status, reviews, AAB upload |
 | **Analytics** | 5 | shell-out | Events, DAU, summary, top events, raw SQL query |
 | **Passwords** | 4 | shell-out | Encrypted password store (list, get, TOTP, generate) |
-| **Google Ads** | 7 | native | GAQL queries, campaigns, ad groups, keywords, search terms |
+| **Google Ads** | 10 | native | GAQL queries, campaigns, app campaign creation, cleanup, ad groups, keywords |
 | **AdMob** | 4 | native | Apps, ad units, network reports, mediation groups |
 
 ### Google Ads tools
@@ -70,6 +66,9 @@ claude mcp add nst-mcp -- npx tsx /path/to/nst-mcp/src/index.ts
 | `nst_gads_search_terms` | Search term report (actual queries that triggered ads) |
 | `nst_gads_keywords` | Keywords in an ad group with metrics |
 | `nst_gads_performance` | Account-level performance summary |
+| `nst_gads_app_campaign_create` | Create App Install campaign (budget + campaign + ad group + ad in one call) |
+| `nst_gads_campaign_delete` | Remove a campaign |
+| `nst_gads_campaign_cleanup` | Auto-find and delete underperforming campaigns (Zombie's rule) |
 
 ### AdMob tools
 
@@ -93,6 +92,79 @@ nst vault secrets set "GOOGLE_ADS_MANAGER_ID=..."        -p nantestudio -e prd
 ```
 
 If these secrets are missing, the server still starts — Google Ads and AdMob tools will return clear error messages, but all other tools work fine.
+
+## App Ad Factory Strategy
+
+Inspired by [Programming Zombie's](https://www.inflearn.com/) proven app monetization model. The core idea: spend $1/day on Google Ads → earn $5/day from AdMob = **5x ROAS**. Scale across many apps.
+
+### The pipeline
+
+```
+"run ads for braintalk"
+  │
+  ├─ 1. nst play status --package com.nantestudio.braintalk    (get app info)
+  ├─ 2. Claude generates 10 headlines + 10 descriptions        (AI copy)
+  ├─ 3. nst_ads_copy_validate                                  (char limits check)
+  ├─ 4. nst_gads_app_campaign_create                           (create campaign)
+  │     name: braintalk_20260324_5000_KR
+  │     budget: 5,000 KRW/day
+  │     country: KR
+  │     status: PAUSED (review first)
+  ├─ 5. Review → enable campaign
+  │
+  │  ... 2 weeks later ...
+  │
+  └─ 6. nst_gads_campaign_cleanup                              (kill losers)
+        rule: >14 days, <1K impressions, <20K KRW spent → delete
+```
+
+### Key rules
+
+| Rule | Value |
+|------|-------|
+| Starting budget | 2,000-5,000 KRW/day |
+| Testing period | Minimum 2 weeks per campaign |
+| Target margin | 40%+ (AdMob revenue - ad spend) |
+| Campaign survival rate | ~6-7% (build many, keep few) |
+| Naming convention | `{app}_{YYYYMMDD}_{budget}_{country}` |
+| Campaign type | App Install (`MULTI_CHANNEL` + `APP_CAMPAIGN`) |
+
+### Ad copy rules
+
+- Titles: max 30 characters, no `!`, no quotes
+- Descriptions: max 90 characters, no quotes
+- Each line must make sense independently
+- Target demographics via copy, not settings (e.g. "중년을 위한 맞춤 식단" → higher-income users → higher eCPM)
+- CJK characters count as 2 towards char limit
+
+### Scaling targets
+
+| Apps with ads | Estimated monthly revenue |
+|---------------|--------------------------|
+| 10 apps | ~$1,200/month |
+| 25 apps | ~$3,000/month |
+| 50 apps | ~$6,000/month |
+
+### Cleanup automation
+
+`nst_gads_campaign_cleanup` implements Zombie's rule for killing underperforming campaigns:
+
+```bash
+# Preview what would be deleted (default: dry_run=true)
+# → campaigns older than 14 days with <1K impressions AND <20K KRW spent
+
+# Actually delete losers
+# → set dry_run=false
+```
+
+### Two-account strategy
+
+| Account | Purpose | Apps |
+|---------|---------|------|
+| **andyleeboo** | Money factory (utility apps with IAP) | Apps with in-app purchases |
+| **Nante Studio** | Art projects (brand-clean apps) | Free apps, creative apps |
+
+One AdMob account (`pub-7342013959296228`) for both — multiple AdMob accounts = ban risk.
 
 ## Adding a new domain
 
@@ -125,15 +197,16 @@ import { register as mydomain } from "./mydomain.js";
 export const domains = [/* ... */, mydomain];
 ```
 
-3. `npm run build` and restart.
+3. `bun run build` and restart.
 
 ## Development
 
 ```bash
-npm run dev          # Run via tsx (no build step)
-npm run typecheck    # Type-check without emitting
-npm run build        # Compile to dist/
-npm test             # Run tests
+bun install          # Install dependencies
+bun run dev          # Run TypeScript directly (no build step)
+bun run build        # Compile to dist/
+bun run typecheck    # Type-check without emitting
+bun test             # Run tests
 ```
 
 ## License
