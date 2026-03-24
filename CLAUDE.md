@@ -4,21 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**nst-mcp** — Unified MCP server for the Nante Studio platform. 62 tools across 10 domains. TypeScript, stdio transport. Two runtime deps: `@modelcontextprotocol/sdk` + `zod`.
+**nst-mcp** — Unified MCP server for the Nante Studio platform. 65 tools across 10 domains. TypeScript, stdio transport. Two runtime deps: `@modelcontextprotocol/sdk` + `zod`.
 
 Two integration patterns:
 - **Shell-out** (51 tools): calls `nst` or `asc` CLI binaries via `execFile`, returns their JSON stdout
-- **Native REST** (11 tools): calls Google Ads and AdMob REST APIs directly via `fetch()`
+- **Native REST** (14 tools): calls Google Ads and AdMob REST APIs directly via `fetch()`
 
 ## Commands
 
 ```bash
-npm install               # Install dependencies
-npm run build             # Compile TypeScript → dist/
-npm run dev               # Run directly via tsx (no build step)
-npm run typecheck         # Type-check without emitting
-npm test                  # Run tests (vitest)
-npm start                 # Run from compiled dist/
+bun install               # Install dependencies
+bun run build             # Compile TypeScript → dist/
+bun run dev               # Run TypeScript directly (no build step)
+bun run typecheck         # Type-check without emitting
+bun test                  # Run tests
 ```
 
 ## Source Layout
@@ -39,7 +38,7 @@ src/
     ├── play.ts            # 4 tools — nst play (status, releases, reviews, upload)
     ├── analytics.ts       # 5 tools — nst analytics (events, dau, summary, top-events, query)
     ├── passwords.ts       # 4 tools — nst passwords (list, get, totp, generate)
-    ├── google-ads.ts      # 7 tools — Google Ads REST v19 (GAQL query, campaigns, ad groups, keywords)
+    ├── google-ads.ts      # 10 tools — Google Ads REST v19 (GAQL, campaigns, app campaign create, cleanup)
     └── admob.ts           # 4 tools — AdMob REST v1 (apps, ad units, reports, mediation)
 ```
 
@@ -116,12 +115,6 @@ The server always starts. Google Ads and AdMob tools lazy-load credentials on fi
 ## Claude Code Configuration
 
 ```bash
-# Local build
-claude mcp add nst-mcp -- node /path/to/nst-mcp/dist/index.js
-
-# Development
-claude mcp add nst-mcp -- npx tsx /path/to/nst-mcp/src/index.ts
-
-# npm (after publishing)
-claude mcp add nst-mcp -- npx @nantestudio/nst-mcp
+# Runs TypeScript directly — no build step needed
+claude mcp add nst-mcp -- bun /path/to/nst-mcp/src/index.ts
 ```

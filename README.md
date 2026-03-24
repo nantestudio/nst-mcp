@@ -1,6 +1,6 @@
 # nst-mcp
 
-Unified [MCP](https://modelcontextprotocol.io) server for the **Nante Studio** platform. Gives Claude Code (and any MCP-compatible AI agent) structured access to 62 tools across 10 domains.
+Unified [MCP](https://modelcontextprotocol.io) server for the **Nante Studio** platform. Gives Claude Code (and any MCP-compatible AI agent) structured access to 65 tools across 10 domains.
 
 ## How it works
 
