@@ -3,6 +3,10 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+// Resolve binary paths — Claude Desktop's node process may not have ~/.cargo/bin in PATH
+const NST_BIN = process.env.NST_BIN || "/Users/hoho/.cargo/bin/nst";
+const ASC_BIN = process.env.ASC_BIN || "asc";
+
 interface ShellResult {
   content: Array<{ type: "text"; text: string }>;
   [key: string]: unknown;
@@ -17,7 +21,7 @@ export async function runNst(
   args: string[],
   options?: ShellOptions,
 ): Promise<ShellResult> {
-  return runCommand("nst", args, options);
+  return runCommand(NST_BIN, args, options);
 }
 
 export async function runAsc(
@@ -28,7 +32,7 @@ export async function runAsc(
   if (!args.some((a) => a === "--output" || a.startsWith("--output="))) {
     args.push("--output", "json");
   }
-  return runCommand("asc", args, options);
+  return runCommand(ASC_BIN, args, options);
 }
 
 async function runCommand(

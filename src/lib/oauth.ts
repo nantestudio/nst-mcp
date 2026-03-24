@@ -57,8 +57,10 @@ export class GoogleOAuth {
   }
 }
 
+const NST_BIN = process.env.NST_BIN || "/Users/hoho/.cargo/bin/nst";
+
 async function getVaultSecret(key: string): Promise<string> {
-  const { stdout } = await execFileAsync("nst", [
+  const { stdout } = await execFileAsync(NST_BIN, [
     "vault",
     "secrets",
     "get",
