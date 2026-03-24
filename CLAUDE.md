@@ -108,9 +108,14 @@ The server always starts. Google Ads and AdMob tools lazy-load credentials on fi
 
 ## Prerequisites
 
-- `nst` CLI installed and authenticated (`cargo install --path .` from nante-studio-cli, then `nst login`)
+- `nst` CLI installed and authenticated:
+  ```bash
+  brew tap nantestudio/tap && brew install nst   # Homebrew (recommended)
+  # or: cargo install --path . (from nante-studio-cli repo)
+  nst login
+  ```
 - `asc` CLI installed (for App Store Connect tools)
-- Node.js >= 20
+- Node.js >= 20 or Bun
 
 ## Claude Code Configuration
 
@@ -118,3 +123,18 @@ The server always starts. Google Ads and AdMob tools lazy-load credentials on fi
 # Runs TypeScript directly — no build step needed
 claude mcp add nst-mcp -- bun /path/to/nst-mcp/src/index.ts
 ```
+
+## Related: nst android create
+
+`nst` includes an Android app scaffolding command that generates Kotlin + Compose projects with Next-Gen GMA SDK, Room, Ktor, Firebase pre-wired:
+
+```bash
+nst android create "MyApp" --org com.nantestudio
+cd myapp && ./run   # build + install on connected device
+```
+
+Once an app is created, use nst-mcp tools to manage its lifecycle:
+- `nst_admob_*` — create ad units, check revenue
+- `nst_gads_*` — create Google Ads install campaigns
+- `nst_play_*` — upload to Play Store, manage releases
+- `nst_analytics_*` — track user events
