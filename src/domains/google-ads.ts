@@ -92,14 +92,17 @@ async function gadsRequest(
     );
 
   const token = await oauth.getAccessToken();
-  const url = `https://googleads.googleapis.com/v19/customers/${customerId}${path}`;
+  const url = `https://googleads.googleapis.com/v21/customers/${customerId}${path}`;
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     "developer-token": developerToken,
     "Content-Type": "application/json",
   };
-  if (managerId) {
+  // Only set login-customer-id when querying the manager account itself
+  // or its child accounts. For standalone accounts (like the advertiser),
+  // sending the manager ID causes a PERMISSION_DENIED error.
+  if (managerId && customerId === managerId) {
     headers["login-customer-id"] = managerId;
   }
 
@@ -144,7 +147,7 @@ export function register(server: McpServer): void {
 
   server.tool(
     "nst_gads_query",
-    "Run a GAQL (Google Ads Query Language) query. See https://developers.google.com/google-ads/api/fields/v19/overview for available fields.",
+    "Run a GAQL (Google Ads Query Language) query. See https://developers.google.com/google-ads/api/fields/v21/overview for available fields.",
     {
       query: z
         .string()
